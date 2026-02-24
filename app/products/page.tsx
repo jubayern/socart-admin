@@ -29,8 +29,8 @@ export default function ProductsPage() {
   const load = async () => {
     setLoading(true)
     const [p, c] = await Promise.all([
-      api.get('/api/products/all').then(r => r.data).catch(() => []),
-      api.get('/api/categories').then(r => r.data).catch(() => []),
+      api.get('/api/products/admin/list').then(r => r.data).catch(() => []),
+      api.get('/api/categories/all').then(r => r.data).catch(() => []),
     ])
     setProducts(p); setCategories(c); setLoading(false)
   }

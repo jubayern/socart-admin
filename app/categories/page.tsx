@@ -22,7 +22,7 @@ export default function CategoriesPage() {
     load()
   }, [])
 
-  const load = () => api.get('/api/categories').then(r => setCats(r.data)).catch(() => {})
+  const load = () => api.get('/api/categories/all').then(r => setCats(r.data)).catch(() => {})
 
   const openForm = (c?: any) => {
     setEditing(c||null)
