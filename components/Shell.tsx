@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShoppingBag, Package, Grid3X3, Users, Tag, Megaphone, Settings, ShieldCheck, LogOut, MoreHorizontal, X, Zap } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Package, Grid3X3, Users, Tag, Megaphone, Settings, ShieldCheck, LogOut, MoreHorizontal, X, Zap, Image, Coins, LifeBuoy, Landmark, RotateCcw } from 'lucide-react'
 import { getRole, clearSession } from '../lib/api'
 import Toaster from './Toaster'
 
@@ -13,6 +13,12 @@ const TABS = [
   { href:'/categories', Icon:Grid3X3,          label:'Cats'     },
 ]
 const EXTRAS = [
+  { href:'/banners',   Icon:Image,      label:'Banners',   roles:['admin','root'] },
+  { href:'/announcements', Icon:Megaphone, label:'Announce', roles:['admin','root'] },
+  { href:'/coins',     Icon:Coins,      label:'Coins',     roles:['admin','root'] },
+  { href:'/support',   Icon:LifeBuoy,   label:'Support',   roles:['admin','root'] },
+  { href:'/withdrawals', Icon:Landmark, label:'Withdraw',  roles:['admin','root'] },
+  { href:'/returns',   Icon:RotateCcw,  label:'Returns',   roles:['admin','root'] },
   { href:'/users',     Icon:Users,       label:'Users',     roles:['admin','root'] },
   { href:'/coupons',   Icon:Tag,         label:'Coupons',   roles:['admin','root'] },
   { href:'/broadcast', Icon:Megaphone,   label:'Broadcast', roles:['admin','root'] },
