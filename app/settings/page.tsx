@@ -1,67 +1,70 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save } from 'lucide-react'
-import Layout from '../../components/Layout'
+import { Save, Check } from 'lucide-react'
+import Shell from '../../components/Shell'
 import { api, getToken } from '../../lib/api'
 
-const FIELDS = [
-  { section: 'Shop', items: [
-    { key: 'shop_name',  label: 'Shop Name',  type: 'text' },
-    { key: 'shop_phone', label: 'Shop Phone', type: 'text' },
+const SECTIONS = [
+  { title:'Shop', fields:[
+    { key:'shop_name',  label:'Shop Name',  type:'text'   },
+    { key:'shop_phone', label:'Phone',      type:'text'   },
   ]},
-  { section: 'Delivery', items: [
-    { key: 'delivery_charge',     label: 'Delivery Charge (৳)',    type: 'number' },
-    { key: 'free_delivery_above', label: 'Free Delivery Above (৳)', type: 'number' },
+  { title:'Delivery', fields:[
+    { key:'delivery_charge',     label:'Delivery Charge (৳)',     type:'number' },
+    { key:'free_delivery_above', label:'Free Delivery Above (৳)', type:'number' },
   ]},
-  { section: 'Payment Numbers', items: [
-    { key: 'bkash_number',  label: 'bKash',  type: 'text' },
-    { key: 'nagad_number',  label: 'Nagad',  type: 'text' },
-    { key: 'rocket_number', label: 'Rocket', type: 'text' },
+  { title:'Payment Numbers', fields:[
+    { key:'bkash_number',  label:'bKash',  type:'text' },
+    { key:'nagad_number',  label:'Nagad',  type:'text' },
+    { key:'rocket_number', label:'Rocket', type:'text' },
   ]},
 ]
 
 export default function SettingsPage() {
   const router = useRouter()
-  const [form, setForm]     = useState<any>({})
+  const [form, setForm]   = useState<any>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved]   = useState(false)
 
   useEffect(() => {
-    if (!getToken()) { router.push('/'); return }
-    api.get('/api/admin/settings').then(r => setForm(r.data)).catch(() => {})
+    if (!getToken()) { router.replace('/'); return }
+    api.get('/api/admin/settings').then(r => setForm(r.data)).catch(()=>{})
   }, [])
 
   const save = async () => {
     setSaving(true)
-    await api.put('/api/admin/settings', form).catch(() => {})
+    await api.put('/api/admin/settings', form).catch(()=>{})
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   return (
-    <Layout>
+    <Shell title="Settings">
       <div className="px-4 py-4 space-y-4">
-        {FIELDS.map(({ section, items }) => (
-          <div key={section} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <h2 className="font-semibold text-slate-700 text-sm mb-3">{section}</h2>
+        {SECTIONS.map(({ title, fields }) => (
+          <div key={title} className="rounded-3xl p-4 shadow-sm" style={{ background:'var(--card)' }}>
+            <p className="font-bold text-sm mb-4" style={{ color:'var(--text)' }}>{title}</p>
             <div className="space-y-3">
-              {items.map(({ key, label, type }) => (
+              {fields.map(({ key, label, type }) => (
                 <div key={key}>
-                  <label className="text-xs font-medium text-slate-400 block mb-1">{label}</label>
-                  <input type={type} value={form[key] || ''} onChange={e => setForm((f: any) => ({...f, [key]: e.target.value}))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400" />
+                  <p className="text-xs font-semibold mb-1.5" style={{ color:'var(--muted)' }}>{label}</p>
+                  <input type={type} value={form[key]||''}
+                    onChange={e => setForm((f: any) => ({...f,[key]:e.target.value}))}
+                    className="w-full px-4 py-3 rounded-2xl text-sm outline-none"
+                    style={{ background:'var(--bg)', border:'1.5px solid var(--border)', color:'var(--text)' }} />
                 </div>
               ))}
             </div>
           </div>
         ))}
+
         <button onClick={save} disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
-          {saved ? 'Saved!' : saving ? 'Saving...' : <><Save size={15} /> Save Settings</>}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm text-white disabled:opacity-50 shadow-sm"
+          style={{ background: saved ? '#15803d' : 'var(--brand)' }}>
+          {saved ? <><Check size={16}/>Saved!</> : saving ? 'Saving...' : <><Save size={16}/>Save Settings</>}
         </button>
       </div>
-    </Layout>
+    </Shell>
   )
 }
