@@ -4,74 +4,62 @@ import { useRouter } from 'next/navigation'
 import { Send, Users } from 'lucide-react'
 import Shell from '../../components/Shell'
 import { api, getToken } from '../../lib/api'
+import { toast } from '../../lib/toast'
 
 export default function BroadcastPage() {
   const router = useRouter()
   const [msg, setMsg]         = useState('')
   const [sending, setSending] = useState(false)
-  const [result, setResult]   = useState<any>(null)
   const [count, setCount]     = useState(0)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
-    api.get('/api/users/').then(r => setCount(r.data.filter((u: any) => !u.is_blocked).length)).catch(()=>{})
+    api.get('/api/users/').then(r => setCount(r.data.filter((u:any) => !u.is_blocked).length)).catch(()=>{})
   }, [])
 
   const send = async () => {
     if (!msg.trim()) return
-    setSending(true); setResult(null)
-    const r = await api.post('/api/admin/broadcast', { message: msg }).catch(() => null)
-    setResult(r?.data || { error: 'Failed to send' })
+    setSending(true)
+    try {
+      const r = await api.post('/api/admin/broadcast', { message: msg })
+      toast.success(`Sent to ${r.data.sent} users!`)
+      setMsg('')
+    } catch { toast.error('Broadcast failed') }
     setSending(false)
-    if (r?.data?.sent) setMsg('')
   }
 
   return (
-    <Shell title="Broadcast">
-      <div className="px-4 py-4 space-y-4">
-        <div className="flex items-center gap-3 p-4 rounded-3xl shadow-sm" style={{ background:'var(--card)' }}>
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background:'var(--brand-light)' }}>
-            <Users size={22} style={{ color:'var(--brand)' }} />
+    <Shell>
+      <div className="anim-fadeup" style={{ padding:'14px', display:'flex', flexDirection:'column', gap:14 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:18 }}>
+          <div style={{ width:46, height:46, borderRadius:13, flexShrink:0, background:'var(--accent-lt)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <Users size={22} color="var(--accent-text)" />
           </div>
           <div>
-            <p className="font-bold text-lg" style={{ color:'var(--text)' }}>{count}</p>
-            <p className="text-xs" style={{ color:'var(--muted)' }}>Active recipients</p>
+            <p style={{ fontSize:22, fontWeight:800, color:'var(--txt)' }}>{count}</p>
+            <p style={{ fontSize:12, color:'var(--txt2)' }}>active recipients</p>
           </div>
         </div>
 
-        <div className="rounded-3xl p-4 shadow-sm" style={{ background:'var(--card)' }}>
-          <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color:'var(--muted)' }}>Message</p>
+        <div style={{ background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:18, padding:'16px' }}>
+          <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--txt3)', marginBottom:10 }}>Message</p>
           <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={9}
             placeholder={'Write your message...\n\n<b>Bold</b>  <i>Italic</i>  supported'}
-            className="w-full px-4 py-3 rounded-2xl text-sm outline-none resize-none font-mono"
-            style={{ background:'var(--bg)', border:'1.5px solid var(--border)', color:'var(--text)' }} />
-          <div className="flex items-center justify-between mt-3">
-            <p className="text-xs" style={{ color:'var(--muted)' }}>{msg.length} chars</p>
-            <button onClick={send} disabled={sending || !msg.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold text-white disabled:opacity-50"
-              style={{ background:'var(--brand)' }}>
+            style={{ background:'var(--s2)', border:'1.5px solid var(--bdr2)', borderRadius:12, padding:'12px 14px', fontSize:13, color:'var(--txt)', width:'100%', resize:'none', fontFamily:'monospace', lineHeight:1.7 }} />
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:12 }}>
+            <p style={{ fontSize:12, color:'var(--txt3)' }}>{msg.length} chars</p>
+            <button onClick={send} disabled={sending||!msg.trim()} style={{
+              display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, border:'none', cursor:'pointer',
+              background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'white', fontSize:13, fontWeight:700,
+              boxShadow:'0 4px 16px rgba(124,58,237,.35)', opacity: !msg.trim()?0.5:1,
+            }}>
               {sending
-                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>Sending...</>
-                : <><Send size={14}/>Send to All</>
+                ? <><div style={{ width:14, height:14, borderRadius:'50%', border:'2px solid rgba(255,255,255,.3)', borderTopColor:'white', animation:'spin 1s linear infinite' }}/>Sending...</>
+                : <><Send size={13}/>Send to All</>
               }
             </button>
           </div>
         </div>
-
-        {result && (
-          <div className="rounded-3xl p-4" style={{
-            background: result.error ? '#fee2e2' : '#dcfce7',
-            border: `1.5px solid ${result.error ? '#fca5a5' : '#86efac'}`
-          }}>
-            {result.error
-              ? <p className="font-semibold text-sm" style={{ color:'#7f1d1d' }}>{result.error}</p>
-              : <>
-                  <p className="font-bold text-sm" style={{ color:'#14532d' }}>Sent successfully!</p>
-                  <p className="text-xs mt-0.5" style={{ color:'#166534' }}>Sent: {result.sent} · Failed: {result.failed}</p>
-                </>
-            }
-          </div>
-        )}
       </div>
     </Shell>
   )

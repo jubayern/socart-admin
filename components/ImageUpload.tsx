@@ -8,12 +8,7 @@ const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-interface Props {
-  value: string[]
-  onChange: (urls: string[]) => void
-  max?: number
-  folder?: string
-}
+interface Props { value: string[]; onChange: (u: string[]) => void; max?: number; folder?: string }
 
 export default function ImageUpload({ value, onChange, max, folder = 'general' }: Props) {
   const [busy, setBusy] = useState(false)
@@ -23,11 +18,11 @@ export default function ImageUpload({ value, onChange, max, folder = 'general' }
     const ext  = file.name.split('.').pop()
     const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     const { error } = await sb.storage.from('products').upload(path, file, { upsert: true })
-    if (error) { alert('Upload gagal: ' + error.message); return null }
+    if (error) { alert('Upload failed: ' + error.message); return null }
     return sb.storage.from('products').getPublicUrl(path).data.publicUrl
   }
 
-  const onChange2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handle = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     setBusy(true)
     for (const f of files) {
@@ -39,30 +34,33 @@ export default function ImageUpload({ value, onChange, max, folder = 'general' }
     e.target.value = ''
   }
 
-  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
-  const canAdd  = !max || value.length < max
+  const remove = (i: number) => onChange(value.filter((_,idx) => idx !== i))
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {value.map((url, i) => (
-          <div key={i} className="relative w-[72px] h-[72px] rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
-            <img src={url} className="w-full h-full object-cover" alt="" />
-            <button onClick={() => remove(i)}
-              className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center">
-              <X size={10} className="text-white" />
-            </button>
-          </div>
-        ))}
-        {canAdd && (
-          <button onClick={() => ref.current?.click()} disabled={busy}
-            style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}
-            className="w-[72px] h-[72px] rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-1 transition">
-            {busy ? <Loader2 size={20} className="animate-spin" /> : <><Camera size={20} /><span className="text-[10px] font-semibold">Photo</span></>}
+    <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+      {value.map((url, i) => (
+        <div key={i} style={{ position:'relative', width:72, height:72, borderRadius:12, overflow:'hidden', border:'1.5px solid var(--bdr2)', flexShrink:0 }}>
+          <img src={url} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt="" />
+          <button onClick={() => remove(i)} style={{
+            position:'absolute', top:4, right:4, width:20, height:20, borderRadius:'50%',
+            background:'rgba(0,0,0,.7)', border:'none', cursor:'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>
+            <X size={11} color="white" />
           </button>
-        )}
-      </div>
-      <input ref={ref} type="file" accept="image/*" multiple={!max || max > 1} className="hidden" onChange={onChange2} />
+        </div>
+      ))}
+      {(!max || value.length < max) && (
+        <button onClick={() => ref.current?.click()} disabled={busy} style={{
+          width:72, height:72, borderRadius:12, flexShrink:0, cursor:'pointer',
+          background:'var(--s2)', border:'1.5px dashed var(--bdr2)',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          gap:4, color:'var(--txt2)',
+        }}>
+          {busy ? <Loader2 size={20} style={{ animation:'spin 1s linear infinite' }} /> : <><Camera size={20} /><span style={{ fontSize:10, fontWeight:600 }}>Photo</span></>}
+        </button>
+      )}
+      <input ref={ref} type="file" accept="image/*" multiple={!max || max > 1} style={{ display:'none' }} onChange={handle} />
     </div>
   )
 }

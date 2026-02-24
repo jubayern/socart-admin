@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Search, Ban, ShieldCheck, User } from 'lucide-react'
 import Shell from '../../components/Shell'
 import { api, getToken } from '../../lib/api'
+import { toast } from '../../lib/toast'
 
 export default function UsersPage() {
   const router = useRouter()
@@ -16,61 +17,61 @@ export default function UsersPage() {
     api.get('/api/users/').then(r => { setUsers(r.data); setLoading(false) }).catch(() => setLoading(false))
   }, [])
 
-  const block = async (id: string, val: boolean) => {
-    await api.put(`/api/users/${id}/block?is_blocked=${val}`)
-    setUsers(u => u.map(x => x.id===id ? {...x,is_blocked:val} : x))
+  const block = async (id: string, name: string, val: boolean) => {
+    try {
+      await api.put(`/api/users/${id}/block?is_blocked=${val}`)
+      setUsers(u => u.map(x => x.id===id ? {...x,is_blocked:val} : x))
+      toast.success(val ? `${name} blocked` : `${name} unblocked`)
+    } catch { toast.error('Failed') }
   }
 
-  const ROLE: Record<string,{bg:string,color:string}> = {
-    root:  {bg:'#ede9fe',color:'#4c1d95'},
-    admin: {bg:'#dbeafe',color:'#1e3a5f'},
-    user:  {bg:'#f3f4f6',color:'#374151'},
+  const ROLE: Record<string,{bg:string,c:string}> = {
+    root:  { bg:'var(--purple-lt)', c:'var(--purple)' },
+    admin: { bg:'var(--blue-lt)',   c:'var(--blue)'   },
+    user:  { bg:'var(--s3)',        c:'var(--txt2)'   },
   }
 
   const filtered = users.filter(u =>
-    !search ||
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    !search || u.name?.toLowerCase().includes(search.toLowerCase()) ||
     u.username?.toLowerCase().includes(search.toLowerCase()) ||
     String(u.telegram_id).includes(search)
   )
 
   return (
-    <Shell title="Users">
-      <div className="px-4 py-4">
-        <div className="relative mb-4">
-          <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color:'var(--muted)' }} />
+    <Shell>
+      <div className="anim-fadeup" style={{ padding:'14px' }}>
+        <div style={{ position:'relative', marginBottom:14 }}>
+          <Search size={15} color="var(--txt3)" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..."
-            className="w-full pl-11 pr-4 py-3 rounded-2xl text-sm outline-none"
-            style={{ background:'var(--card)', border:'1.5px solid var(--border)', color:'var(--text)' }} />
+            style={{ background:'var(--s1)', border:'1.5px solid var(--bdr2)', borderRadius:14, padding:'12px 14px 12px 40px', fontSize:14, color:'var(--txt)', width:'100%' }} />
         </div>
+
         {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor:'var(--brand-light)', borderTopColor:'var(--brand)' }} />
+          <div style={{ display:'flex', justifyContent:'center', paddingTop:60 }}>
+            <div style={{ width:32, height:32, borderRadius:'50%', border:'3px solid var(--accent-lt)', borderTopColor:'var(--accent)', animation:'spin 1s linear infinite' }} />
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {filtered.map((u: any) => {
               const rs = ROLE[u.role] || ROLE.user
               return (
-                <div key={u.id} className="flex items-center gap-3 p-3 rounded-3xl shadow-sm" style={{ background:'var(--card)' }}>
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background:'var(--brand-light)' }}>
-                    <User size={20} style={{ color:'var(--brand)' }} />
+                <div key={u.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:18 }}>
+                  <div style={{ width:44, height:44, borderRadius:13, flexShrink:0, background:'var(--accent-lt)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <User size={20} color="var(--accent-text)" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-sm truncate" style={{ color:'var(--text)' }}>{u.name||'Unknown'}</p>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize flex-shrink-0" style={{ background:rs.bg, color:rs.color }}>
-                        {u.role}
-                      </span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                      <p style={{ fontWeight:700, fontSize:13, color:'var(--txt)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{u.name||'Unknown'}</p>
+                      <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:99, flexShrink:0, background:rs.bg, color:rs.c, textTransform:'capitalize' }}>{u.role}</span>
                     </div>
-                    <p className="text-xs font-mono mt-0.5" style={{ color:'var(--muted)' }}>
-                      {u.telegram_id}{u.username ? ` · @${u.username}` : ''}
-                    </p>
+                    <p style={{ fontSize:11, color:'var(--txt3)', fontFamily:'monospace', marginTop:2 }}>{u.telegram_id}{u.username ? ` · @${u.username}` : ''}</p>
                   </div>
-                  <button onClick={() => block(u.id, !u.is_blocked)}
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: u.is_blocked ? '#dcfce7' : '#fee2e2', color: u.is_blocked ? '#15803d' : '#ef4444' }}>
-                    {u.is_blocked ? <ShieldCheck size={18} /> : <Ban size={18} />}
+                  <button onClick={() => block(u.id, u.name, !u.is_blocked)} style={{
+                    width:38, height:38, borderRadius:11, flexShrink:0, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', border:'none',
+                    background: u.is_blocked ? 'var(--green-lt)' : 'var(--red-lt)',
+                    color:      u.is_blocked ? 'var(--green)'    : 'var(--red)',
+                  }}>
+                    {u.is_blocked ? <ShieldCheck size={17}/> : <Ban size={17}/>}
                   </button>
                 </div>
               )
