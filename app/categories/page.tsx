@@ -23,7 +23,7 @@ export default function CategoriesPage() {
     load()
   }, [])
 
-  const load = () => api.get('/api/categories').then(r => setCategories(r.data)).catch(() => {})
+  const load = () => api.get('/api/categories/all').then(r => setCategories(r.data)).catch(() => {})
 
   const open = (cat?: any) => {
     setEditing(cat || null)
