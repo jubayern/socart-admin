@@ -7,7 +7,18 @@ import ImageUpload from '../../components/ImageUpload'
 import { api, getToken } from '../../lib/api'
 import { toast } from '../../lib/toast'
 
-const EMPTY = { name:'', description:'', price:'', old_price:'', stock:'0', category_id:'', is_active:true, is_featured:false }
+const EMPTY = {
+  name:'', description:'', price:'', old_price:'', stock:'0', category_id:'',
+  is_active:true, is_featured:false,
+
+  flash_sale:false, flash_sale_price:'', flash_sale_ends_at:'',
+  offer_badge:'', authenticity_badge:'',
+  rules:'', size_guide:'', video_url:'',
+  social_proof_count:'0',
+  bulk_min_qty:'', bulk_discount_pct:'',
+  cashback_pct:'0',
+  notify_on_restock:false,
+}
 type V = { id?: string; name: string; options: string[] }
 
 // Shared input style
@@ -43,8 +54,30 @@ export default function ProductsPage() {
   const openForm = async (p?: any) => {
     if (p) {
       setEditing(p)
-      setForm({ name:p.name, description:p.description||'', price:p.price, old_price:p.old_price||'',
-        stock:p.stock, category_id:p.category_id||'', is_active:p.is_active, is_featured:p.is_featured })
+      setForm({
+        name:p.name,
+        description:p.description||'',
+        price:p.price,
+        old_price:p.old_price||'',
+        stock:p.stock,
+        category_id:p.category_id||'',
+        is_active:p.is_active,
+        is_featured:p.is_featured,
+
+        flash_sale: !!p.flash_sale,
+        flash_sale_price: p.flash_sale_price ?? '',
+        flash_sale_ends_at: p.flash_sale_ends_at ?? '',
+        offer_badge: p.offer_badge ?? '',
+        authenticity_badge: p.authenticity_badge ?? '',
+        rules: p.rules ?? '',
+        size_guide: p.size_guide ?? '',
+        video_url: p.video_url ?? '',
+        social_proof_count: p.social_proof_count ?? 0,
+        bulk_min_qty: p.bulk_min_qty ?? '',
+        bulk_discount_pct: p.bulk_discount_pct ?? '',
+        cashback_pct: p.cashback_pct ?? 0,
+        notify_on_restock: !!p.notify_on_restock,
+      })
       setImages(p.images||[])
       const v = await api.get(`/api/variants/${p.id}`).then(r => r.data).catch(() => [])
       setVariants(v)
@@ -58,7 +91,28 @@ export default function ProductsPage() {
     if (!form.name || !form.price) return
     setSaving(true)
     try {
-      const body = { ...form, price:+form.price, old_price:form.old_price?+form.old_price:null, stock:+form.stock, category_id:form.category_id||null, images }
+      const body = {
+        ...form,
+        price:+form.price,
+        old_price: form.old_price ? +form.old_price : null,
+        stock:+form.stock,
+        category_id: form.category_id || null,
+        images,
+
+        flash_sale: !!form.flash_sale,
+        flash_sale_price: form.flash_sale_price !== '' ? +form.flash_sale_price : null,
+        flash_sale_ends_at: form.flash_sale_ends_at || null,
+        offer_badge: form.offer_badge || null,
+        authenticity_badge: form.authenticity_badge || null,
+        rules: form.rules || null,
+        size_guide: form.size_guide || null,
+        video_url: form.video_url || null,
+        social_proof_count: +form.social_proof_count || 0,
+        bulk_min_qty: form.bulk_min_qty !== '' ? +form.bulk_min_qty : null,
+        bulk_discount_pct: form.bulk_discount_pct !== '' ? +form.bulk_discount_pct : null,
+        cashback_pct: +form.cashback_pct || 0,
+        notify_on_restock: !!form.notify_on_restock,
+      }
       let pid = editing?.id
       if (editing) {
         await api.put(`/api/products/${editing.id}`, body)
@@ -215,6 +269,57 @@ export default function ProductsPage() {
               <div>
                 <span style={label}>Images</span>
                 <ImageUpload value={images} onChange={setImages} folder="products" />
+              </div>
+
+              {/* Offers & Badges */}
+              <div>
+                <span style={label}>Offers & Badges</span>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', fontSize:13, fontWeight:600, color:'var(--txt2)' }}>
+                    <input type="checkbox" checked={!!form.flash_sale} onChange={e => sf('flash_sale', e.target.checked)} />
+                    Flash Sale
+                  </label>
+                  <div style={row}>
+                    <input value={form.flash_sale_price} onChange={e => sf('flash_sale_price', e.target.value)} type="number" placeholder="Flash Sale Price" style={iStyle} />
+                    <input value={form.flash_sale_ends_at} onChange={e => sf('flash_sale_ends_at', e.target.value)} placeholder="Flash Ends At (optional)" style={iStyle} />
+                  </div>
+                  <select value={form.offer_badge} onChange={e => sf('offer_badge', e.target.value)} style={iStyle}>
+                    <option value="">No offer badge</option>
+                    <option value="free_delivery">Free Delivery</option>
+                    <option value="buy1get1">Buy 1 Get 1</option>
+                    <option value="buy2get1">Buy 2 Get 1</option>
+                  </select>
+                  <input value={form.authenticity_badge} onChange={e => sf('authenticity_badge', e.target.value)} placeholder="Authenticity badge (e.g. 100% Original)" style={iStyle} />
+                </div>
+              </div>
+
+              {/* Extra Details */}
+              <div>
+                <span style={label}>Extra Details</span>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <input value={form.video_url} onChange={e => sf('video_url', e.target.value)} placeholder="Video URL (optional)" style={iStyle} />
+                  <textarea value={form.rules} onChange={e => sf('rules', e.target.value)} placeholder="Rules / Instructions (optional)" rows={3} style={{ ...iStyle, resize:'none' }} />
+                  <textarea value={form.size_guide} onChange={e => sf('size_guide', e.target.value)} placeholder="Size guide (optional)" rows={3} style={{ ...iStyle, resize:'none' }} />
+                </div>
+              </div>
+
+              {/* Growth & Pricing */}
+              <div>
+                <span style={label}>Growth & Pricing</span>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <div style={row}>
+                    <input value={form.cashback_pct} onChange={e => sf('cashback_pct', e.target.value)} type="number" placeholder="Cashback %" style={iStyle} />
+                    <input value={form.social_proof_count} onChange={e => sf('social_proof_count', e.target.value)} type="number" placeholder="Social proof count" style={iStyle} />
+                  </div>
+                  <div style={row}>
+                    <input value={form.bulk_min_qty} onChange={e => sf('bulk_min_qty', e.target.value)} type="number" placeholder="Bulk min qty" style={iStyle} />
+                    <input value={form.bulk_discount_pct} onChange={e => sf('bulk_discount_pct', e.target.value)} type="number" placeholder="Bulk discount %" style={iStyle} />
+                  </div>
+                  <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', fontSize:13, fontWeight:600, color:'var(--txt2)' }}>
+                    <input type="checkbox" checked={!!form.notify_on_restock} onChange={e => sf('notify_on_restock', e.target.checked)} />
+                    Enable restock notify
+                  </label>
+                </div>
               </div>
 
               {/* Variants */}
