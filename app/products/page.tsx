@@ -132,7 +132,10 @@ export default function ProductsPage() {
         }
       }
       setOpen(false); load()
-    } catch { toast.error('Failed to save product') }
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || e?.response?.data?.message || 'Failed to save product'
+      toast.error(msg)
+    }
     setSaving(false)
   }
 
@@ -281,8 +284,11 @@ export default function ProductsPage() {
                   </label>
                   <div style={row}>
                     <input value={form.flash_sale_price} onChange={e => sf('flash_sale_price', e.target.value)} type="number" placeholder="Flash Sale Price" style={iStyle} />
-                    <input value={form.flash_sale_ends_at} onChange={e => sf('flash_sale_ends_at', e.target.value)} placeholder="Flash Ends At (optional)" style={iStyle} />
+                    <input value={form.flash_sale_ends_at} onChange={e => sf('flash_sale_ends_at', e.target.value)} type="datetime-local" placeholder="Flash Ends At" style={iStyle} />
                   </div>
+                  <p style={{ fontSize:11, color:'var(--txt3)', marginTop:2 }}>
+                    Tip: ends time format should be a valid date-time (or leave empty).
+                  </p>
                   <select value={form.offer_badge} onChange={e => sf('offer_badge', e.target.value)} style={iStyle}>
                     <option value="">No offer badge</option>
                     <option value="free_delivery">Free Delivery</option>
