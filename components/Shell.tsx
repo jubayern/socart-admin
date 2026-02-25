@@ -133,7 +133,16 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 <X size={14} color="var(--txt2)" />
               </button>
             </div>
-            <nav style={{ flex:1, padding:'10px 8px', display:'flex', flexDirection:'column', gap:2 }}>
+            <nav style={{
+              flex: 1,
+              padding: '10px 8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+            }}>
               {allItems.map(({ href, Icon, label }) => {
                 const a = path === href
                 return (
@@ -150,7 +159,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 )
               })}
             </nav>
-            <div style={{ padding:'8px 8px 28px', borderTop:'1px solid var(--bdr)' }}>
+            <div style={{ padding:'8px 8px calc(28px + env(safe-area-inset-bottom, 0px))', borderTop:'1px solid var(--bdr)' }}>
               <button onClick={logout} style={{
                 width:'100%', display:'flex', alignItems:'center', gap:11,
                 padding:'11px 13px', borderRadius:11, cursor:'pointer',
